@@ -1,0 +1,21 @@
+[package]
+name = "filedb"
+version = "0.1.0"
+authors = ["Ryan <rnleach@users.noreply.github.com>"]
+edition = "2018"
+publish = false
+description = "A library for storing files in an SQLITE3 database with a key and time stamp."
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+lto = "fat"
+
+[dependencies]
+chrono = "^0.4"
+flate2 = "^1.0"
+rusqlite = {version = "^0.24", features = ["chrono"]}
+
+[dev-dependencies]
+tempfile = "^3.2.0"
+
