@@ -1,4 +1,4 @@
-use rusqlite::ToSql;
+use rusqlite::{OptionalExtension, ToSql};
 use std::io::Write;
 
 /// A handle to a file database on the local file system.
@@ -44,11 +44,14 @@ impl FileDB {
 
         let time_stamp: i64 = time_stamp.timestamp();
 
-        let bytes: Option<Vec<u8>> = self.conn.query_row(
-            DB_RETRIEVE_FILE_QUERY,
-            &[&key as &dyn ToSql, &time_stamp as &dyn ToSql],
-            |row| row.get(0),
-        )?;
+        let bytes: Option<Vec<u8>> = self
+            .conn
+            .query_row(
+                DB_RETRIEVE_FILE_QUERY,
+                &[&key as &dyn ToSql, &time_stamp as &dyn ToSql],
+                |row| row.get(0),
+            )
+            .optional()?;
 
         if let Some(bytes) = bytes {
             deflater.write_all(&bytes[..])?;
@@ -114,7 +117,7 @@ mod test {
     use std::io::Read;
 
     #[test]
-    fn test_database() {
+    fn test_round_trip() -> Result<(), Box<dyn std::error::Error>> {
         let temp_db = tempfile::NamedTempFile::new_in(".").unwrap();
         let db_fname = temp_db.path();
         let db = super::FileDB::connect(db_fname).unwrap();
@@ -132,6 +135,28 @@ mod test {
 
         assert_eq!(test_data, retrieved);
 
-        temp_db.persist("./test_database_testdb.sqlite3").unwrap();
+        Ok(())
+    }
+
+    #[test]
+    fn test_no_file() -> Result<(), Box<dyn std::error::Error>> {
+        let temp_db = tempfile::NamedTempFile::new_in(".").unwrap();
+        let db_fname = temp_db.path();
+        let db = super::FileDB::connect(db_fname).unwrap();
+
+        let time_stamp = chrono::offset::Utc::now().naive_utc();
+        let mut test_data: String = String::new();
+        let mut test_data_file = std::fs::File::open("src/filedb.rs").unwrap();
+        test_data_file.read_to_string(&mut test_data).unwrap();
+
+        db.add_file("filedb.rs", time_stamp, test_data.as_bytes())
+            .unwrap();
+
+        let bytes = db
+            .retrieve_file("some_file_that_is_not_in_there", time_stamp)
+            .unwrap();
+        assert!(bytes.is_none());
+
+        Ok(())
     }
 }
