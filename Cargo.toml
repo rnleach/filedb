@@ -1,6 +1,6 @@
 [package]
 name = "filedb"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Ryan <rnleach@users.noreply.github.com>"]
 edition = "2018"
 publish = false

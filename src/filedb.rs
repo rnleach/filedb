@@ -62,6 +62,25 @@ impl FileDB {
         }
     }
 
+    /// List all files in the database.
+    ///
+    /// # Returns
+    /// 
+    /// Returns an interator of tuples with the key and timestamp of all the files in the 
+    /// archive.
+    pub fn list_all(&'_ self) -> Result<Vec<(String, chrono::NaiveDateTime)>, crate::error::Error> {
+
+        let mut stmt = self.conn.prepare("SELECT key, time_stamp FROM files")?;
+
+        let all = stmt.
+            query_map(rusqlite::NO_PARAMS, |row| row.get(0).and_then(|key| row.get(1).map(|ts| (key, ts))))?
+            .filter_map(|res| res.ok())
+            .map(|(key, ts)| (key, chrono::NaiveDateTime::from_timestamp(ts, 0))).collect();
+
+        Ok(all)
+
+    }
+
     /// Add a file to the database.
     ///
     /// # Arguments
