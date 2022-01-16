@@ -14,7 +14,7 @@ impl FileDB {
     /// Connect to a file database stored at the provided path.
     pub fn connect<P: AsRef<std::path::Path>>(path: P) -> Result<Self, crate::error::Error> {
         let conn = rusqlite::Connection::open(path.as_ref())?;
-        conn.execute(DB_INIT_QUERY, rusqlite::NO_PARAMS)?;
+        conn.execute(DB_INIT_QUERY, [])?;
 
         Ok(Self { conn })
     }
@@ -48,7 +48,7 @@ impl FileDB {
             .conn
             .query_row(
                 DB_RETRIEVE_FILE_QUERY,
-                &[&key as &dyn ToSql, &time_stamp as &dyn ToSql],
+                [&key as &dyn ToSql, &time_stamp as &dyn ToSql],
                 |row| row.get(0),
             )
             .optional()?;
@@ -73,7 +73,7 @@ impl FileDB {
         let mut stmt = self.conn.prepare("SELECT key, time_stamp FROM files")?;
 
         let all = stmt.
-            query_map(rusqlite::NO_PARAMS, |row| row.get(0).and_then(|key| row.get(1).map(|ts| (key, ts))))?
+            query_map([], |row| row.get(0).and_then(|key| row.get(1).map(|ts| (key, ts))))?
             .filter_map(|res| res.ok())
             .map(|(key, ts)| (key, chrono::NaiveDateTime::from_timestamp(ts, 0))).collect();
 
@@ -108,7 +108,7 @@ impl FileDB {
 
         self.conn.execute(
             DB_INSERT_FILE_QUERY,
-            &[
+            [
                 &key as &dyn ToSql,
                 &time_stamp as &dyn ToSql,
                 &compressed_data as &dyn ToSql,
@@ -122,7 +122,7 @@ impl FileDB {
 impl Drop for FileDB {
     fn drop(&mut self) {
         let earliest_date = chrono::offset::Utc::now().naive_utc() - chrono::Duration::days(365);
-        let _ = self.conn.execute(DB_CLEANUP_QUERY, &[earliest_date]);
+        let _ = self.conn.execute(DB_CLEANUP_QUERY, [&earliest_date]);
     }
 }
 

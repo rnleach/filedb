@@ -1,8 +1,8 @@
 [package]
 name = "filedb"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Ryan <rnleach@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 publish = false
 description = "A library for storing files in an SQLITE3 database with a key and time stamp."
 
@@ -14,7 +14,7 @@ lto = "fat"
 [dependencies]
 chrono = "^0.4"
 flate2 = "^1.0"
-rusqlite = {version = "^0.24", features = ["chrono"]}
+rusqlite = {version = "^0.26", features = ["chrono"]}
 
 [dev-dependencies]
 tempfile = "^3.2.0"
